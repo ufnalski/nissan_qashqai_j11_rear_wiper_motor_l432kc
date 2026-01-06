@@ -39,8 +39,9 @@
 #define PWM_ARR 1000
 #define PWM_MID_CCR 500
 #define PWM_INCRENEMT 100
+#define V_DC 11.3f // V
 
-#define MAX_NUMBER_OF_SWIPES 13
+#define MAX_NUMBER_OF_SWIPES 32
 
 #define OLED_REFRESH_RATE 200 // ms
 /* USER CODE END PD */
@@ -110,9 +111,9 @@ int main(void)
 	ssd1306_Fill(Black);
 	ssd1306_SetCursor(21, 2);
 	ssd1306_WriteString("ufnalski.edu.pl", Font_6x8, White);
-	ssd1306_SetCursor(6, 16);
+	ssd1306_SetCursor(6, 14);
 	ssd1306_WriteString("Nissan Qashqai (J11)", Font_6x8, White);
-	ssd1306_SetCursor(16, 30);
+	ssd1306_SetCursor(16, 26);
 	ssd1306_WriteString("rear wiper motor", Font_6x8, White);
 	ssd1306_UpdateScreen();
 
@@ -133,7 +134,11 @@ int main(void)
 			softTimerOLED = HAL_GetTick();
 			HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
 
-			ssd1306_SetCursor(15, 50);
+			ssd1306_SetCursor(15, 42);
+			sprintf(lcd_line, "v_out = %.1f V  ",
+					((float) PWM_MID_CCR - (float) pwm_ccr) / PWM_MID_CCR * V_DC);
+			ssd1306_WriteString(lcd_line, Font_6x8, White);
+			ssd1306_SetCursor(15, 54);
 			sprintf(lcd_line, "n_of_swipes = %d  ", number_of_swipes);
 			ssd1306_WriteString(lcd_line, Font_6x8, White);
 			ssd1306_UpdateScreen();
@@ -141,8 +146,9 @@ int main(void)
 
 		if (number_of_swipes >= MAX_NUMBER_OF_SWIPES)  // stop the wiper
 		{
-			__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, PWM_MID_CCR);
-			__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_4, PWM_ARR - PWM_MID_CCR);
+			pwm_ccr = PWM_MID_CCR;
+			__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, pwm_ccr);
+			__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_4, PWM_ARR - pwm_ccr);
 		}
 		/* USER CODE END WHILE */
 
